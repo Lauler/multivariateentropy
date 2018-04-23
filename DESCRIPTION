@@ -1,0 +1,14 @@
+Package: multivariateentropy
+Version: 0.0.0.9000
+Title: Multivariate Entropy
+Description: Implements functions for calculating (discrete) multivariate entropies of arbitrary degrees. Provides a function for determining the optimal bin sizes which maximize univariate entropies. 
+Authors@R: person("Faton", "Rekathati", , "first.last@example.com", c("aut", "cre"))
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+ByteCompile: true
+RoxygenNote: 6.0.1
+Imports: 
+    dplyr,
+    tidyr,
+    magrittr
