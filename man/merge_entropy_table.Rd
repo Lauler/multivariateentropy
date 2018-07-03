@@ -10,7 +10,7 @@ merge_entropy_table(data)
 \item{data}{Data frame with discrete variables.}
 }
 \value{
-Merges the list of lists from the \code(multi_entrop()) function.
+Merges the list of lists from the \code{multi_entropy()} function.
 }
 \description{
 Title

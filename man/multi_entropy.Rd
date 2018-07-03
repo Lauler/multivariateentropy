@@ -18,5 +18,6 @@ Returns a list of lists with each variables' n-variate entropies.
 Calculate n-variate entropy
 }
 \examples{
-multi_entropy(df, n_variate = 1:3)
+\dontrun{
+multi_entropy(df, n_variate = 1:3)}
 }

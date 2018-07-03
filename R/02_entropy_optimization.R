@@ -1,39 +1,15 @@
-#' 4 categories.
-#'
-#' @param cutoffs Discrete bins.
-#' @param data Numeric vector. The degrees of entropy to calculate.
-#'
-#' @return Data frame of discretized variables.
-#' @export
-#'
-#' @examples \code(categorize(c(0, 0, 0.2, 0.4), df))
-categorize <- function(cutoffs, data){
-
-  vars <- names(data)
-
-  data <- data %>%
-    dplyr::mutate_at(.vars = vars(vars),
-                     .funs = function(x) as.factor(dplyr::case_when(
-                        x >= cutoffs[1] ~ "once a week or more",
-                        x >= cutoffs[2] ~ "several times a week",
-                        x > cutoffs[3] ~ "once to twice a week",
-                        x <= cutoffs[4] ~ "less than once a week",
-                        TRUE ~ "other"
-                      )))
-
-  return(data)
-}
-
-
 #' Calculate n-variate entropy
 #'
+#' @importFrom magrittr %>%
 #' @param data Data frame containing only discrete data.
 #' @param n_variate Numeric vector. The degrees of entropy to calculate.
 #'
 #' @return Returns a list of lists with each variables' n-variate entropies.
 #' @export
 #'
-#' @examples multi_entropy(df, n_variate = 1:3)
+#' @examples
+#' \dontrun{
+#' multi_entropy(df, n_variate = 1:3)}
 multi_entropy <- function(data, n_variate = 2){
   n_variate <- as.list(n_variate)
   vars <- names(data)
@@ -45,7 +21,7 @@ multi_entropy <- function(data, n_variate = 2){
     dplyr::ungroup()
 
   var_combinations <- lapply(n_variate,
-                             function(x) as_tibble(utils::combn(x = names(data %>% dplyr::select(-n)), m = x)))
+                             function(x) dplyr::as_tibble(utils::combn(x = names(data %>% dplyr::select(-n)), m = x)))
 
   entropies <- list()
   i <- 1
@@ -80,13 +56,11 @@ multi_entropy <- function(data, n_variate = 2){
 
 #' Calculate the sum of entropies from all variables
 #'
-#' @param cutoffs Initial values for cutoffs.
 #' @param data Data frame containing only discrete data.
 #'
 #' @return Numeric. Sum of all variables' entropies.
 #' @export
-sum_entropy <- function(cutoffs, data){
-  data <- categorize(cutoffs = cutoffs, data = data)
+sum_entropy <- function(data){
 
   entropies <- multi_entropy(data, n_variate = 1)
 
@@ -97,33 +71,11 @@ sum_entropy <- function(cutoffs, data){
 }
 
 
-#' Find bin sizes which optimize the entropy
-#'
-#' @param data
-#'
-#' @return Returns an optim() object
-#' @export
-#'
-#' @examples optimize_entropy(df)
-optimize_entropy <- function(data){
-  best_params <- stats::optim(par = c(0, 0, 0, 0),
-                              fn = sum_entropy,
-                              data = data,
-                              lower = c(0, 0, 0, 0),
-                              upper = c(5, 5, 5, 5),
-                              method = "L-BFGS-B",
-                              control = list(fnscale = -1))
-
-  return(best_params)
-}
-
-
 #' Title
 #'
 #' @param data Data frame with discrete variables.
 #'
-#' @return Merges the list of lists from the \code(multi_entrop()) function.
-#' @export
+#' @return Merges the list of lists from the \code{multi_entropy()} function.
 merge_entropy_table <- function(data){
 
   i <- 0
@@ -143,3 +95,32 @@ merge_entropy_table <- function(data){
 }
 
 
+#' A table of entropy measures
+#'
+#' @param entropy_list Takes the output of the \code{multi_entropy()} function as input a list of data frames
+#' containing univariate and bivariate entropies.
+#'
+#'
+#' @return Returns a data frame of entropy measures: univariate entropies,
+#' bivariate entropies, mutual information and dependence measures.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' df_list <- multi_entropy(df, n_variate = 1:2)
+#' df_entropies <- entropy_table(df_list)}
+entropy_table <- function(entropy_list){
+  entropy_list <- merge_entropy_table(entropy_list)
+
+  df <- entropy_list[[2]] %>%
+    dplyr::left_join(entropy_list[[1]], by = c("var1" = "var1")) %>%
+    dplyr::left_join(entropy_list[[1]], by = c("var2" = "var1")) %>%
+    dplyr::rename(entropy = entropy.x,
+                  entropy.x = entropy.y,
+                  entropy.y = entropy) %>%
+    dplyr::mutate(mutual_info = (entropy.x + entropy.y - entropy),
+                  dependence_var2_var1 = (mutual_info)/entropy.x,
+                  dependence_var1_var2 = (mutual_info)/entropy.y)
+
+  return(df)
+}

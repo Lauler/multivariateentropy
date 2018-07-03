@@ -4,11 +4,9 @@
 \alias{sum_entropy}
 \title{Calculate the sum of entropies from all variables}
 \usage{
-sum_entropy(cutoffs, data)
+sum_entropy(data)
 }
 \arguments{
-\item{cutoffs}{Initial values for cutoffs.}
-
 \item{data}{Data frame containing only discrete data.}
 }
 \value{
